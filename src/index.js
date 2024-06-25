@@ -1,13 +1,13 @@
 const express = require('express');
 const axios = require('axios');
-const mongoose = require('./config');
-const Repository = require('./models');
-const cors = require('cors'); // Импортируем cors
+const mongoose = require('./config'); // Убедитесь, что путь правильный
+const Repository = require('./models'); // Убедитесь, что путь правильный
+const cors = require('cors');
 
 const app = express();
 
 app.use(express.json());
-app.use(cors()); // Используем cors
+app.use(cors());
 
 const GITHUB_TRENDING_URL = 'https://api.github.com/search/repositories?q=stars:>1&sort=stars&order=desc';
 let syncInterval;
@@ -34,29 +34,7 @@ const startSync = () => {
   syncInterval = setInterval(fetchTrendingRepositories, SYNC_INTERVAL_MINUTES * 60 * 1000);
 };
 
-app.get('/repositories', async (req, res) => {
-  try {
-    const repositories = await Repository.find();
-    res.json(repositories);
-  } catch (error) {
-    console.error('Error fetching repositories:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-app.get('/repositories/:id', async (req, res) => {
-  try {
-    const repository = await Repository.findOne({ id: req.params.id });
-    if (repository) {
-      res.json(repository);
-    } else {
-      res.status(404).json({ error: 'Repository not found' });
-    }
-  } catch (error) {
-    console.error('Error fetching repository:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+app.use('/repositories', require('./routes/repositories'));
 
 app.post('/sync', (req, res) => {
   startSync();
@@ -71,4 +49,14 @@ mongoose.connection.once('open', () => {
     console.log(`Server is running on port ${PORT}`);
     startSync();
   });
+});
+
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Something broke!');
 });
