@@ -3,7 +3,7 @@
 const axios = require('axios');
 const yargs = require('yargs');
 
-const apiUrl = 'http://localhost:3000';
+const apiUrl = 'https://github-client-teal.vercel.app/';
 
 const argv = yargs
   .command('get [id]', 'Get repository by ID or get all repositories', yargs => {
